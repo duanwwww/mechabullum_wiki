@@ -1,5 +1,16 @@
 async function renderCSVTable(url, containerId) {
   const res = await fetch(url);
+
+  if (!res.ok) {
+    console.error(`❌ CSV 请求失败: ${res.status} ${res.statusText}`);
+    document.getElementById(containerId).innerHTML = `
+      <div style="color: red; font-weight: bold;">
+        ⚠️ 加载表格失败（${res.status}），请检查 CSV 路径是否正确。
+      </div>
+    `;
+    return;
+  }
+
   const csv = await res.text();
   const lines = csv.trim().split("\n").map(row => row.split(","));
 
@@ -101,7 +112,13 @@ async function renderCSVTable(url, containerId) {
   document.getElementById(containerId).appendChild(table);
 }
 
-// ✅ 页面加载时调用
+// // ✅ 页面加载时调用
+// window.addEventListener("load", () => {
+//   renderCSVTable("/assets/beginning.csv", "csv-table-container");
+// });
+
 window.addEventListener("load", () => {
-  renderCSVTable("/assets/beginning.csv", "csv-table-container");
+  const BASE_PATH = document.querySelector("base")?.getAttribute("href") || "/";
+  const CSV_PATH = `${BASE_PATH}assets/beginning.csv`;
+  renderCSVTable(CSV_PATH, "csv-table-container");
 });
