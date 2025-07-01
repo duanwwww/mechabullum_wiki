@@ -1,3 +1,30 @@
+function interpolateColor(color1, color2, factor) {
+  const hexToRgb = hex => hex.match(/\w\w/g).map(x => parseInt(x, 16));
+  const rgbToHex = rgb => '#' + rgb.map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('');
+
+  const c1 = hexToRgb(color1);
+  const c2 = hexToRgb(color2);
+  const result = c1.map((c, i) => Math.round(c + (c2[i] - c) * factor));
+  return rgbToHex(result);
+}
+
+
+// 渐变方案 1：从 #d7d2db → #a1a0a6（紫→灰黑）
+function getGradientColorGroup1(value, min, max) {
+  return interpolateColor("#d7d2db", "#a1a0a6", (value - min) / (max - min));
+}
+
+// 渐变方案 2：从rgba(249, 95, 0, 0.79) → #c7998b（砖红→深红棕）
+
+function getGradientColorGroup2(value, min, max) {
+  return interpolateColor("#edc0b6", "#c7998b", (value - min) / (max - min));
+}
+
+
+
 async function renderCSVTable(url, containerId) {
   const res = await fetch(url);
 
@@ -28,8 +55,12 @@ async function renderCSVTable(url, containerId) {
   const rowOffsets = lines.slice(2).map(r => parseFloat(r[1]));
 
   // ✅ 计算实际血量矩阵（不含表头标题，只用于染色计算）
-  console.log(colOffsets);
-  console.log(rowOffsets);
+  // console.log(colOffsets);
+  // console.log(rowOffsets);
+  const row_minValue = Math.min(...rowOffsets);
+  const row_maxValue = Math.max(...rowOffsets);
+  const column_minValue = Math.min(...colOffsets);
+  const column_maxValue = Math.max(...colOffsets);
   let allValues = [];
 
   for (let i = 2; i < numRows; i++) {
@@ -43,14 +74,14 @@ async function renderCSVTable(url, containerId) {
   const minValue = Math.min(...allValues);
   const maxValue = Math.max(...allValues);
 
-  // ✅ 色彩映射函数（蓝色为主）
-  function getHeatColor(value) {
-    const percent = (value - minValue) / (maxValue - minValue);
-    const r = Math.round(255 - 100 * percent);
-    const g = Math.round(255 - 200 * percent);
-    const b = 255;
-    return `rgb(${r},${g},${b})`;
-  }
+  // // ✅ 色彩映射函数（蓝色为主）
+  // function getHeatColor(value) {
+  //   const percent = (value - minValue) / (maxValue - minValue);
+  //   const r = Math.round(255 - 100 * percent);
+  //   const g = Math.round(255 - 200 * percent);
+  //   const b = 255;
+  //   return `rgb(${r},${g},${b})`;
+  // }
 
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
@@ -85,22 +116,36 @@ async function renderCSVTable(url, containerId) {
         const rowOffset = rowOffsets[i - 2];
         const colOffset = colOffsets[j - 2];
         const hp = baseHP + rowOffset + colOffset;
-        el.style.backgroundColor = getHeatColor(hp);
+        // el.style.backgroundColor = getHeatColor(hp);
+        // el.style.backgroundColor = getGradientColorGroup2(hp, minValue, maxValue);
+        el.style.backgroundColor = (i % 2 === 0 ? "#68edcb" : "#32a63a");
+        // el.style.backgroundColor = (i % 2 === 0 ? "#adad88" : "#68edcb");
+        // el.style.backgroundColor = (i % 2 === 0 ?  "#ca97ed" : "#9363b4");
         el.title = `${hp}`;
-      } else if (i <= 1 && j > 1) {
+      } else if (i === 1 || j === 1) {
         // 第一行兵种补正
         const colOffset = colOffsets[j - 2];
-        const hp = baseHP + colOffset;
-        el.style.backgroundColor = getHeatColor(hp);
-        el.title = `兵种补正后: ${hp}`;
-      } else if (j <= 1 && i > 1) {
-        // 第一列专家补正
-        const rowOffset = rowOffsets[i - 2];
-        const hp = baseHP + rowOffset;
-        el.style.backgroundColor = getHeatColor(hp);
-        el.title = `专家补正后: ${hp}`;
+        // const hp = baseHP + colOffset;
+        // el.style.backgroundColor = getHeatColor(hp);
+        // el.style.backgroundColor = getGradientColorGroup1(colOffset, column_minValue, column_maxValue);
+        // el.style.backgroundColor = "#d05b74";
+        el.style.backgroundColor = "#92b83f"
+
+        // el.style.backgroundColor = "#f09ec5";
+        // el.title = `兵种补正后: ${hp}`;
+      // } else if (j === 1 && i >= 1) {
+      //   // 第一列专家补正
+      //   const rowOffset = rowOffsets[i - 2];
+      //   // const hp = baseHP + rowOffset;
+      //   // el.style.backgroundColor = getHeatColor(hp);
+      //   // el.style.backgroundColor = getGradientColorGroup1(rowOffset, row_minValue, row_maxValue);
+      //   // el.style.backgroundColor = "#f1fcf6"
+      //   el.style.backgroundColor = "#a0f399";
+      //   // el.title = `专家补正后: ${hp}`;
+      // } else{
       } else{
-        el.style.backgroundColor = getHeatColor(baseHP);
+        el.style.backgroundColor = "#ececde";
+        // el.style.backgroundColor = "#ffceff";
       }
 
       tr.appendChild(el);
