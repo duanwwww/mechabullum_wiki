@@ -119,6 +119,6 @@ async function renderCSVTable(url, containerId) {
 
 window.addEventListener("load", () => {
   const BASE_PATH = document.querySelector("base")?.getAttribute("href") || "/";
-  const CSV_PATH = `${BASE_PATH}assets/beginning.csv`;
+  const CSV_PATH = `${BASE_PATH}mechabullum_wiki/assets/beginning.csv`;
   renderCSVTable(CSV_PATH, "csv-table-container");
 });
